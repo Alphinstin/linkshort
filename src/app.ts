@@ -9,6 +9,7 @@ import {
 } from "./types";
 import { client } from "./redis";
 import { SetOptions } from "redis";
+import { getChannel, QUEUE } from "./queue";
 // Narrow an unknown catch value down to "looks like a pg DatabaseError"
 // without pulling in pg's internal error class. 23505 = unique_violation.
 function isUniqueViolation(err: unknown): boolean {
@@ -125,6 +126,20 @@ export function buildApp(): Express {
         }
         // TODO (week 5): publish a click event to the queue here instead
         // of nothing. Keep this handler fast — no synchronous analytics writes.
+        try {
+          const queueWrite = getChannel().sendToQueue(
+            QUEUE,
+            Buffer.from(
+              JSON.stringify({
+                short_code: shortCode,
+                ip_address: req.ip,
+                user_agent: req.get("User-Agent"),
+              }),
+            ),
+          );
+        } catch (err) {
+          console.error(err);
+        }
         if (process.env.CACHE_BYPASS === "false") {
           await client.set(shortCode, JSON.stringify(row), setOptions);
         }

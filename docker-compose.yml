@@ -16,6 +16,12 @@ services:
     command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
     volumes:
       - redis_data:/data
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    env_file: .env
 volumes:
   pgdata:
   redis_data:

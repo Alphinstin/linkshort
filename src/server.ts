@@ -1,4 +1,5 @@
 import { buildApp } from "./app";
+import { connectQueue } from "./queue";
 import { client } from "./redis";
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 const app = buildApp();
@@ -7,6 +8,11 @@ async function main() {
     await client.connect();
   } catch (err) {
     throw new Error("Unable to connect to redis client", { cause: err });
+  }
+  try {
+    await connectQueue();
+  } catch (err) {
+    throw new Error("Unable to connect to rabbitmq", { cause: err });
   }
 
   app.listen(PORT, () => {
