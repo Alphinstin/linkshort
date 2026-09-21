@@ -17,4 +17,5 @@ CREATE TABLE IF NOT EXISTS click_events (
     time_stamp TIMESTAMPTZ NOT NULL DEFAULT now(),
     ip_address inet NOT NULL,
     user_agent VARCHAR(256) NOT NULL
-)
+);
+CREATE INDEX IF NOT EXISTS idx_click_events_short_code on click_events(short_code);
