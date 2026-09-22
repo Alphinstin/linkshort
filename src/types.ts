@@ -18,3 +18,11 @@ export interface CreateLinkResponseBody {
 export interface ErrorResponseBody {
   error: string;
 }
+
+export interface ClickEventsRow {
+  id: number;
+  short_code: string;
+  time_stamp: Date;
+  ip_address: string;
+  user_agent: string;
+}
