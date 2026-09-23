@@ -1,4 +1,4 @@
-import { connectQueue, getChannel, QUEUE } from "./queue";
+import { closeQueue, connectQueue, getChannel, QUEUE } from "./queue";
 import { pool } from "./db";
 import { ClickEventsRow } from "./types";
 
@@ -14,7 +14,10 @@ async function startWorker() {
 
         try {
           const messageContent = msg.content.toString();
-          const payload = JSON.parse(messageContent) as ClickEventsRow;
+          const payload = JSON.parse(messageContent) as Omit<
+            ClickEventsRow,
+            "id" | "time_stamp"
+          >;
 
           console.log(`[x] received task;`, payload);
           const result = await pool.query<Pick<ClickEventsRow, "short_code">>(
@@ -34,8 +37,19 @@ async function startWorker() {
       },
       { noAck: false },
     );
+    process.on("SIGTERM", async () => {
+      await cleanUp();
+    });
+
+    process.on("SIGINT", async () => {
+      await cleanUp();
+    });
   } catch (error) {
     console.error(error);
   }
+}
+async function cleanUp() {
+  await closeQueue();
+  process.exit(0);
 }
 startWorker();
