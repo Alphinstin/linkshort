@@ -11,7 +11,7 @@ async function startWorker() {
       QUEUE,
       async (msg) => {
         if (msg === null) return;
-        let short_code, ip_address, user_agent;
+        let short_code, ip_address, user_agent, event_id;
         try {
           const messageContent = msg.content.toString();
           const payload = JSON.parse(messageContent) as Omit<
@@ -21,6 +21,7 @@ async function startWorker() {
           short_code = payload.short_code;
           ip_address = payload.ip_address;
           user_agent = payload.user_agent;
+          event_id = payload.event_id;
           // console.log(`[x] received task;`, payload);
         } catch (error) {
           console.error(`[!] Error processing message`);
@@ -29,14 +30,10 @@ async function startWorker() {
         }
         try {
           const result = await pool.query<Pick<ClickEventsRow, "short_code">>(
-            "INSERT INTO click_events (short_code, ip_address, user_agent) VALUES ($1, $2, $3) RETURNING short_code",
-            [short_code, ip_address, user_agent],
+            "INSERT INTO click_events (short_code, ip_address, user_agent, event_id) VALUES ($1, $2, $3, $4) ON CONFLICT (event_id) DO NOTHING RETURNING short_code",
+            [short_code, ip_address, user_agent, event_id],
           );
 
-          const row = result.rows[0];
-          if (!row) {
-            throw new Error("There was an issue adding the click event");
-          }
           channel.ack(msg);
         } catch (err) {
           console.error(`[! Error pushing to database]`);

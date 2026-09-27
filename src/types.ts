@@ -25,4 +25,5 @@ export interface ClickEventsRow {
   time_stamp: Date;
   ip_address: string;
   user_agent: string;
+  event_id: string;
 }

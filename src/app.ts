@@ -134,6 +134,7 @@ export function buildApp(): Express {
                 short_code: shortCode,
                 ip_address: req.ip,
                 user_agent: req.get("User-Agent"),
+                event_id: crypto.randomUUID(),
               }),
             ),
           );
