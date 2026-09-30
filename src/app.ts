@@ -10,6 +10,7 @@ import {
 import { client } from "./redis";
 import { SetOptions } from "redis";
 import { getChannel, QUEUE } from "./queue";
+import { rateLimiter, routesMaxCounter } from "./rateLimitMiddleware";
 // Narrow an unknown catch value down to "looks like a pg DatabaseError"
 // without pulling in pg's internal error class. 23505 = unique_violation.
 function isUniqueViolation(err: unknown): boolean {
@@ -24,9 +25,15 @@ function isUniqueViolation(err: unknown): boolean {
 export function buildApp(): Express {
   const app = express();
   app.use(express.json());
-
+  app.set("trust proxy", 1);
   app.post(
     "/links",
+    rateLimiter({
+      windowMs: 1000,
+      max: routesMaxCounter["/links"],
+      keyPrefix: "post_links",
+      failOpen: false,
+    }),
     async (
       req: Request<
         {},
@@ -86,6 +93,12 @@ export function buildApp(): Express {
 
   app.get(
     "/:shortCode",
+    rateLimiter({
+      windowMs: 2000,
+      max: routesMaxCounter["/:shortCode"],
+      keyPrefix: "get_shortcode",
+      failOpen: true,
+    }),
     async (
       req: Request<{ shortCode: string }>,
       res: Response<ErrorResponseBody | void>,
